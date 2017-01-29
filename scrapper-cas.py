@@ -1,11 +1,6 @@
 from bs4 import BeautifulSoup
 import requests
-
-config = {
-    'host': 'host',
-    'user': 'user',
-    'pass': 'pass'
-}
+from config import config
 
 class ClientSession:
 
@@ -13,7 +8,7 @@ class ClientSession:
         self.urls = OpenFireUrl(host,user,pwd)
         with requests.Session() as self.session:
             if self.urls.login:
-                login = self.session.get(self.urls.login)
+                login = self.session.get(self.urls.login, timeout=5)
                 self.cookies = login.cookies
             if self.cookies:
                 login = self.session.post(self.urls.loginMain,
@@ -26,21 +21,25 @@ class OpenFireUrl:
         self.host = host
         self.user = user
         self.pwd = pwd
+        self.login = self.login()
+        self.loginMain = self.loginMain()
+        self.avayaPluginMain = self.avayaPluginMain()
+        self.systemParameters = self.systemParameters()
 
-    def login(self,host,user,pwd):
-        return 'http://'+host+':9090/login.jsp'
+    def login(self):
+        return 'http://'+self.host+':9090/login.jsp'
 
-    def loginMain(self,host,user,pwd):
-        return 'http://'+ host + \
+    def loginMain(self):
+        return 'http://'+ self.host + \
             ':9090/login.jsp?url=%2Findex.jsp&login=true&username=' \
-            + user + '&password='+ pwd
+            + self.user + '&password='+ self.pwd
 
-    def avayaPluginMain(self, host,user,pwd):
-        return 'http://' + host + \
+    def avayaPluginMain(self):
+        return 'http://' + self.host + \
             ':9090/plugins/avaya/avaya-summary'
 
-    def systemParameters(self, host, user, pwd):
-        return 'http://' + host + \
+    def systemParameters(self):
+        return 'http://' + self.host + \
             ':9090/server-properties.jsp'
 
 
@@ -48,6 +47,8 @@ class OpenFire:
     def __init__(self,clientSession):
         self.clientSession = clientSession
         self.urls = clientSession.urls
+        self.getParams = self.getParams()
+        self.getAvayaPluginSites = self.getAvayaPluginSites()
 
     def soup(self,htmlObject, parser):
         soup = BeautifulSoup(htmlObject.content, parser)
@@ -96,7 +97,3 @@ class OpenFire:
                     }
 
             return sites
-
-if __name__ == "__main__":
-    session = ClientSession(config['host'], config['user'], config['pass'])
-    OpenFire.getSites(session)
