@@ -1,6 +1,5 @@
 from bs4 import BeautifulSoup
 import requests
-from config import config
 
 class ClientSession:
 
